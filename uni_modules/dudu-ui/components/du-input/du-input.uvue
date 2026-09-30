@@ -1,0 +1,205 @@
+<script setup lang="uts">
+import { computed, shallowRef, nextTick, onMounted, watch } from 'vue'
+import { useDuConfig, controlSize, responsiveSize, themeVariables, themeClass, colorValue, resolveTheme } from '../../shared/config.uts'
+import type { DuSize, DuStyle, DuResponsiveSize } from '../../shared/config.uts'
+defineOptions({ externalClasses: ['label-class', 'input-class', 'message-class'] })
+const props = withDefaults(defineProps<{
+  modelValue?: string
+  value?: string
+  defaultValue?: string
+  label?: string
+  ariaLabel?: string
+  placeholder?: string
+  help?: string
+  error?: string
+  disabled?: boolean
+  readOnly?: boolean
+  required?: boolean
+  password?: boolean
+  type?: 'text' | 'password' | 'email' | 'tel' | 'number' | 'url' | 'search' | 'digit' | 'none'
+  size?: DuSize
+  responsiveSize?: DuResponsiveSize
+  theme?: string
+  unstyled?: boolean
+  name?: string
+  form?: string
+  maxlength?: number
+  minLength?: number
+  pattern?: string
+  autoComplete?: string
+  autoFocus?: boolean
+  autoCorrect?: 'on' | 'off'
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters' | 'off' | 'on'
+  enterKeyHint?: 'enter' | 'done' | 'go' | 'next' | 'previous' | 'search' | 'send'
+  confirmHold?: boolean
+  cursorSpacing?: number
+  adjustPosition?: boolean
+  holdKeyboard?: boolean
+  cursor?: number
+  selectionStart?: number
+  selectionEnd?: number
+  selectionColor?: string
+  placeholderTextColor?: string
+  textContentType?: string
+  color?: string
+  backgroundColor?: string
+  borderColor?: string
+  borderWidth?: number
+  borderRadius?: number
+  fontSize?: number
+  fontWeight?: string
+  forceStyle?: 'hover' | 'focus'
+  hoverStyle?: DuStyle
+  focusStyle?: DuStyle
+  labelClass?: string
+  inputClass?: string
+  messageClass?: string
+}>(), { disabled: undefined, unstyled: undefined, defaultValue: '', label: '', ariaLabel: '', placeholder: '', help: '', error: '', readOnly: false, required: false, password: false, type: 'text', theme: '', maxlength: 140, minLength: 0, autoComplete: 'off', autoFocus: false, autoCorrect: 'on', autoCapitalize: 'sentences', enterKeyHint: 'done', confirmHold: false, cursorSpacing: 0, adjustPosition: true, holdKeyboard: false, cursor: -1, selectionStart: -1, selectionEnd: -1, textContentType: '', labelClass: '', inputClass: '', messageClass: '' })
+const context = useDuConfig()
+const localValue = shallowRef(props.defaultValue)
+const focused = shallowRef(false)
+const hovered = shallowRef(false)
+const requestedFocus = shallowRef(false)
+// #ifdef WEB
+const inputRef = shallowRef<HTMLInputElement | null>(null)
+// #endif
+// #ifndef WEB
+const inputRef = shallowRef<UniInputElement | null>(null)
+// #endif
+const value = computed(() => props.modelValue ?? props.value ?? localValue.value)
+const disabled = computed(() => props.disabled ?? context.value.disabled)
+const unstyled = computed(() => props.unstyled ?? context.value.unstyled)
+const theme = computed(() => props.theme.length > 0 ? resolveTheme(props.theme, context.value.theme, context.value.config, context.value.scheme) : context.value.theme)
+const size = computed(() => responsiveSize(props.size ?? context.value.size, props.responsiveSize, context.value))
+const nativeType = computed(() => props.readOnly ? 'none' : props.type === 'password' || props.type === 'search' ? 'text' : props.type)
+const confirmType = computed(() => props.enterKeyHint === 'enter' || props.enterKeyHint === 'previous' ? 'done' : props.enterKeyHint)
+const controlStyle = computed<DuStyle>(() => {
+  const style: DuStyle = { textAlign: context.value.dir === 'rtl' ? 'right' : 'left' }
+  if (!unstyled.value && (typeof size.value === 'number' || !['sm', 'md', 'lg'].includes(size.value))) { const height = controlSize(size.value, context.value.config); style.height = height + 'px'; style.fontSize = Math.round(height / 3) + 'px' }
+  for (const key of ['color', 'backgroundColor', 'borderColor']) {
+    const color = key === 'color' ? props.color : key === 'backgroundColor' ? props.backgroundColor : props.borderColor
+    if (color != null) style[key] = colorValue(color, theme.value, context.value.config, context.value.scheme)
+  }
+  if (props.borderWidth != null) style.borderWidth = props.borderWidth + 'px'
+  if (props.borderRadius != null) style.borderRadius = Math.max(0, props.borderRadius) + 'px'
+  if (props.fontSize != null) style.fontSize = props.fontSize + 'px'
+  if (props.fontWeight != null) style.fontWeight = props.fontWeight
+  // #ifdef WEB
+  if (props.selectionColor != null) { style.caretColor = colorValue(props.selectionColor, theme.value, context.value.config, context.value.scheme); style['--du-selection'] = style.caretColor }
+  // #endif
+  if (props.placeholderTextColor != null) style['--du-placeholder'] = colorValue(props.placeholderTextColor, theme.value, context.value.config, context.value.scheme)
+  if (!disabled.value) { if (hovered.value || props.forceStyle === 'hover') Object.assign(style, props.hoverStyle ?? {}); if (focused.value || props.forceStyle === 'focus') Object.assign(style, props.focusStyle ?? {}) }
+  if (disabled.value) { style.backgroundColor = 'var(--du-disabled-surface)'; style.color = 'var(--du-disabled-text)' }
+  return style
+})
+const rootStyle = computed(() => props.theme.length > 0 ? themeVariables(theme.value, context.value.config, context.value.scheme) : {})
+const classes = computed(() => ['du-input__control', 'du-input__control--' + (typeof size.value === 'string' && ['sm', 'md', 'lg'].includes(size.value) ? size.value : 'md'), unstyled.value ? 'du-input__control--unstyled' : '', focused.value ? 'du-input__control--focused' : '', props.error.length > 0 ? 'du-input__control--error' : '', disabled.value ? 'du-input__control--disabled' : '', props.inputClass])
+const name = computed(() => props.ariaLabel.length > 0 ? props.ariaLabel : props.label)
+const emit = defineEmits<{
+  (event: 'update:modelValue', value: string): void
+  (event: 'update:value', value: string): void
+  (event: 'input', value: string): void
+  (event: 'change', value: string): void
+  (event: 'focus'): void
+  (event: 'blur'): void
+  (event: 'confirm', value: string): void
+  (event: 'submit-editing', value: string): void
+  (event: 'keyboard-height-change', height: number): void
+}>()
+function restoreValue() { nextTick(() => { if (inputRef.value != null) inputRef.value.value = value.value }) }
+function updateValue(next: string) {
+  if (disabled.value || props.readOnly) { restoreValue(); return }
+  if (next === value.value) return
+  if (props.modelValue == null && props.value == null) localValue.value = next
+  emit('update:modelValue', next); emit('update:value', next); emit('input', next)
+  restoreValue()
+}
+function handleFocus() { focused.value = true; emit('focus');
+  // #ifdef WEB
+  applySelection()
+  // #endif
+}
+function handleBlur() { focused.value = false; requestedFocus.value = false; emit('blur') }
+function confirm() { if (!disabled.value && !props.readOnly) { emit('confirm', value.value); emit('submit-editing', value.value) } }
+function focus() {
+  if (disabled.value) return
+  // #ifdef WEB
+  inputRef.value?.focus()
+  // #endif
+  // #ifndef WEB
+  if (!props.readOnly) requestedFocus.value = true
+  // #endif
+}
+function blur() {
+  // #ifdef WEB
+  inputRef.value?.blur()
+  // #endif
+  // #ifndef WEB
+  requestedFocus.value = false; if (focused.value) uni.hideKeyboard()
+  // #endif
+}
+defineExpose({ focus, blur })
+// #ifdef WEB
+function applySelection() {
+  const element = inputRef.value
+  if (element == null || !['text', 'search', 'password', 'tel', 'url'].includes(element.type)) return
+  const start = props.selectionStart >= 0 ? props.selectionStart : props.cursor
+  if (start >= 0) element.setSelectionRange(start, props.selectionEnd >= 0 ? props.selectionEnd : start)
+}
+onMounted(applySelection)
+watch(() => [props.selectionStart, props.selectionEnd, props.cursor], () => nextTick(applySelection))
+function webInput(event: Event) { updateValue((event.target as HTMLInputElement).value) }
+function webKeydown(event: KeyboardEvent) { if (event.key === 'Enter' && !event.isComposing) confirm() }
+// #endif
+</script>
+
+<template>
+  <view :class="['du-input', props.theme.length > 0 ? themeClass(theme) : '']" :style="rootStyle">
+    <text v-if="props.label.length > 0" :class="['du-input__label', props.labelClass]" @click="focus">{{ props.label }}{{ props.required ? ' *' : '' }}</text>
+    <view class="du-input__field" :style="{ flexDirection: context.dir === 'rtl' ? 'row-reverse' : 'row' }">
+      <slot name="prefix" :disabled="disabled" />
+      <!-- #ifdef WEB -->
+      <component :is="'input'" ref="inputRef" :class="classes" :style="controlStyle" :value="value" :type="props.password ? 'password' : props.type === 'digit' ? 'number' : props.type === 'none' ? 'text' : props.type" :inputmode="props.type === 'digit' ? 'decimal' : undefined" :readonly="props.readOnly" :disabled="disabled" :required="props.required" :name="props.name" :form="props.form" :maxlength="props.maxlength < 0 ? undefined : props.maxlength" :minlength="props.minLength" :pattern="props.pattern" :placeholder="props.placeholder" :autocomplete="props.autoComplete" :autofocus="props.autoFocus" :autocorrect="props.autoCorrect" :autocapitalize="props.autoCapitalize" :enterkeyhint="props.enterKeyHint" :aria-label="name" :aria-invalid="props.error.length > 0" :aria-required="props.required" :aria-description="props.error.length > 0 ? props.error : props.help"
+        @input="webInput" @change="emit('change', value)" @focus="handleFocus" @blur="handleBlur" @keydown="webKeydown" @mouseenter="hovered = true" @mouseleave="hovered = false" />
+      <!-- #endif -->
+      <!-- #ifndef WEB -->
+      <input ref="inputRef" :class="classes" :style="controlStyle" :value="value" :name="props.name" :type="nativeType" :password="props.password || props.type === 'password'" :placeholder="props.placeholder" placeholder-class="du-input__placeholder" :placeholder-style="props.placeholderTextColor == null ? '' : 'color:' + colorValue(props.placeholderTextColor, theme, context.config, context.scheme)" :disabled="disabled || props.readOnly" :maxlength="props.maxlength" :auto-focus="props.autoFocus" :focus="requestedFocus" :confirm-type="confirmType" :confirm-hold="props.confirmHold" :cursor-spacing="props.cursorSpacing" :adjust-position="props.adjustPosition" :hold-keyboard="props.holdKeyboard" :cursor="props.cursor" :selection-start="props.selectionStart" :selection-end="props.selectionEnd" :cursor-color="props.selectionColor == null ? '' : colorValue(props.selectionColor, theme, context.config, context.scheme)" :text-content-type="props.textContentType" :aria-label="name"
+        @input="updateValue($event.detail.value)" @change="emit('change', value)" @focus="handleFocus" @blur="handleBlur" @confirm="confirm" @keyboardheightchange="emit('keyboard-height-change', $event.detail.height)" />
+      <!-- #endif -->
+      <slot name="suffix" :disabled="disabled" />
+    </view>
+    <!-- #ifdef WEB -->
+    <text v-if="props.error.length > 0" :class="['du-input__message', 'du-input__message--error', props.messageClass]" role="alert">{{ props.error }}</text>
+    <!-- #endif -->
+    <!-- #ifndef WEB -->
+    <text v-if="props.error.length > 0" :class="['du-input__message', 'du-input__message--error', props.messageClass]">{{ props.error }}</text>
+    <!-- #endif -->
+    <text v-if="props.error.length === 0 && props.help.length > 0" :class="['du-input__message', props.messageClass]">{{ props.help }}</text>
+    <slot name="message" :error="props.error" :help="props.help" />
+  </view>
+</template>
+
+<style lang="scss">
+@import '../../styles/tokens.scss';
+@import '../../styles/theme.scss';
+.du-input { flex-direction: column; }
+.du-input__field { flex-direction: row; align-items: center; }
+.du-input__label { font-size: var(--du-font-small, $du-font-small); font-weight: 600; color: var(--du-text, $du-text); margin-bottom: var(--du-space-sm, $du-space-sm); }
+.du-input__control { flex: 1; height: var(--du-control-md, $du-control-md); padding: 0px 14px; border-width: 1px; border-style: solid; border-color: var(--du-border, $du-border); border-radius: var(--du-radius, $du-radius); font-size: var(--du-font-body, $du-font-body); color: var(--du-text, $du-text); background-color: var(--du-surface, $du-surface); }
+.du-input__control--sm { height: var(--du-control-sm, $du-control-sm); font-size: var(--du-font-small, $du-font-small); }
+.du-input__control--lg { height: var(--du-control-lg, $du-control-lg); }
+.du-input__placeholder { color: var(--du-text-muted, $du-text-muted); }
+.du-input__control--focused { border-color: var(--du-focus, $du-focus); border-width: 2px; padding: 0px 13px; }
+.du-input__control--error { border-color: var(--du-danger, $du-danger); }
+.du-input__control--disabled { background-color: var(--du-disabled-surface, $du-disabled-surface); color: var(--du-disabled-text, $du-disabled-text); }
+.du-input__control--unstyled { height: auto; padding: 0px; border-width: 0px; border-radius: 0px; background-color: transparent; }
+.du-input__message { margin-top: var(--du-space-sm, $du-space-sm); font-size: var(--du-font-small, $du-font-small); line-height: 20px; color: var(--du-text-muted, $du-text-muted); }
+.du-input__message--error { color: var(--du-danger, $du-danger); }
+/* #ifdef WEB */
+.du-input__field { display: flex; gap: 8px; }
+.du-input__control { box-sizing: border-box; min-width: 0px; font-family: inherit; }
+.du-input__control::placeholder { color: var(--du-placeholder, $du-text-muted); }
+.du-input__control::selection { background-color: var(--du-selection, $du-primary); }
+.du-input__control:focus-visible { outline: 2px solid var(--du-focus, $du-focus); outline-offset: 2px; }
+/* #endif */
+</style>

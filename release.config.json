@@ -1,0 +1,9 @@
+{
+  "platforms": [
+    "web-chrome",
+    "app-android",
+    "app-ios",
+    "app-harmony",
+    "mp-weixin"
+  ]
+}

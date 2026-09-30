@@ -1,0 +1,231 @@
+<script setup lang="uts">
+import { computed, shallowRef, useSlots, onUnmounted, watch } from 'vue'
+import { useDuConfig, controlSize, responsiveSize, themeVariables, themeClass, colorValue, resolveTheme } from '../../shared/config.uts'
+import type { DuSize, DuStyle, DuResponsiveSize } from '../../shared/config.uts'
+defineOptions({ externalClasses: ['text-class', 'content-class', 'icon-class'] })
+const props = withDefaults(defineProps<{
+  label?: string
+  variant?: 'primary' | 'secondary' | 'outline' | 'outlined' | 'ghost' | 'danger'
+  size?: DuSize
+  responsiveSize?: DuResponsiveSize
+  disabled?: boolean
+  loading?: boolean
+  loadingText?: string
+  theme?: string
+  icon?: string
+  iconAfter?: string
+  iconSize?: number | string
+  scaleIcon?: number
+  circular?: boolean
+  chromeless?: boolean | 'all'
+  unstyled?: boolean
+  elevation?: number
+  color?: string
+  backgroundColor?: string
+  borderColor?: string
+  borderWidth?: number
+  borderRadius?: number
+  fontSize?: number
+  fontWeight?: string
+  paddingHorizontal?: number
+  gap?: number
+  hoverStyle?: DuStyle
+  pressStyle?: DuStyle
+  focusStyle?: DuStyle
+  textClass?: string
+  contentClass?: string
+  iconClass?: string
+  type?: 'button' | 'submit' | 'reset'
+  form?: string
+  formAction?: string
+  formMethod?: 'get' | 'post'
+  formEncType?: string
+  formNoValidate?: boolean
+  formTarget?: string
+  name?: string
+  value?: string
+  popoverTarget?: string
+  popoverTargetAction?: 'toggle' | 'show' | 'hide'
+  delayLongPress?: number
+  forceStyle?: 'hover' | 'press' | 'focus'
+  ariaLabel?: string
+}>(), { disabled: undefined, unstyled: undefined, label: '', loading: false, loadingText: '', theme: '', icon: '', iconAfter: '', scaleIcon: 1, circular: false, chromeless: false, elevation: 0, textClass: '', contentClass: '', iconClass: '', type: 'button', formNoValidate: false, ariaLabel: '', delayLongPress: 500 })
+const context = useDuConfig()
+const slots = useSlots()
+const hovered = shallowRef(false)
+const pressed = shallowRef(false)
+const focused = shallowRef(false)
+const disabled = computed(() => props.disabled ?? context.value.disabled)
+const unstyled = computed(() => props.unstyled ?? context.value.unstyled)
+const size = computed(() => responsiveSize(props.size ?? context.value.size, props.responsiveSize, context.value))
+const height = computed(() => controlSize(size.value, context.value.config))
+const variant = computed(() => { const value = props.variant ?? context.value.buttonVariant; return value === 'outlined' ? 'outline' : value })
+const theme = computed(() => props.theme.length > 0 ? resolveTheme(props.theme, context.value.theme, context.value.config, context.value.scheme) : context.value.theme)
+const iconSize = computed(() => Math.max(1, (typeof props.iconSize === 'number' ? props.iconSize : props.iconSize != null ? parseFloat(context.value.config.tokens?.['icon-' + props.iconSize.replace('$', '')] ?? '20') : Math.round(height.value * 0.42)) * Math.max(0.1, props.scaleIcon)))
+const blocked = computed(() => disabled.value || props.loading)
+const text = computed(() => props.loading && props.loadingText.length > 0 ? props.loadingText : props.label)
+const rich = computed(() => props.icon.length > 0 || props.iconAfter.length > 0 || slots.default != null || slots.icon != null || slots['icon-after'] != null || slots.loading != null)
+const stateStyle = computed<DuStyle>(() => {
+  if (blocked.value || props.chromeless === 'all') return {}
+  return { ...((hovered.value || props.forceStyle === 'hover') ? props.hoverStyle ?? {} : {}), ...((focused.value || props.forceStyle === 'focus') ? props.focusStyle ?? {} : {}), ...((pressed.value || props.forceStyle === 'press') ? props.pressStyle ?? {} : {}) }
+})
+const rootStyle = computed<DuStyle>(() => {
+  const style: DuStyle = props.theme.length > 0 ? themeVariables(theme.value, context.value.config, context.value.scheme) : {}
+  if (!unstyled.value) {
+    if ((typeof size.value === 'number' || !['sm', 'md', 'lg'].includes(size.value))) { style.height = height.value + 'px'; style.lineHeight = height.value + 'px'; style.fontSize = Math.round(height.value / 3) + 'px'; style.paddingLeft = Math.round(height.value * 0.42) + 'px'; style.paddingRight = style.paddingLeft }
+    if (props.circular) { style.width = height.value + 'px'; style.minWidth = style.width; style.paddingLeft = '0px'; style.paddingRight = '0px'; style.borderRadius = height.value / 2 + 'px' }
+    if (props.elevation > 0) style.boxShadow = '0px ' + props.elevation + 'px ' + props.elevation * 3 + 'px rgba(0,0,0,0.18)'
+  }
+  if (props.backgroundColor != null) style.backgroundColor = colorValue(props.backgroundColor, theme.value, context.value.config, context.value.scheme)
+  if (props.borderColor != null) style.borderColor = colorValue(props.borderColor, theme.value, context.value.config, context.value.scheme)
+  if (props.borderWidth != null) style.borderWidth = props.borderWidth + 'px'
+  if (props.borderRadius != null) style.borderRadius = Math.max(0, props.borderRadius) + 'px'
+  if (props.paddingHorizontal != null) { style.paddingLeft = props.paddingHorizontal + 'px'; style.paddingRight = style.paddingLeft }
+  if (props.color != null) { style.color = colorValue(props.color, theme.value, context.value.config, context.value.scheme); style['--du-on-primary'] = style.color; style['--du-on-danger'] = style.color; style['--du-text'] = style.color }
+  if (props.fontSize != null) style.fontSize = props.fontSize + 'px'
+  if (props.fontWeight != null) style.fontWeight = props.fontWeight
+  Object.assign(style, stateStyle.value)
+  if (disabled.value) { style.backgroundColor = 'var(--du-disabled-surface)'; style.color = 'var(--du-disabled-text)'; style.borderColor = 'transparent' }
+  return style
+})
+const textStyle = computed<DuStyle>(() => {
+  const style: DuStyle = {}
+  if ((typeof size.value === 'number' || !['sm', 'md', 'lg'].includes(size.value))) style.fontSize = Math.round(height.value / 3) + 'px'
+  for (const key of ['color', 'fontSize', 'fontWeight', 'letterSpacing', 'lineHeight']) if (rootStyle.value[key] != null) style[key] = rootStyle.value[key]
+  return style
+})
+const classes = computed(() => ['du-button', unstyled.value ? '' : 'du-button--styled', 'du-button--' + variant.value, 'du-button--' + (typeof size.value === 'string' && ['sm', 'md', 'lg'].includes(size.value) ? size.value : 'md'), props.circular ? 'du-button--circular' : '', props.chromeless !== false ? 'du-button--chromeless' : '', unstyled.value ? 'du-button--unstyled' : '', disabled.value ? 'du-button--disabled' : '', pressed.value && !blocked.value && props.chromeless !== 'all' ? 'du-button--pressed' : '', props.theme.length > 0 ? themeClass(theme.value) : ''])
+const textClasses = computed(() => ['du-button__text', 'du-button__text--' + (props.chromeless !== false || unstyled.value ? 'secondary' : variant.value), size.value === 'sm' ? 'du-button__text--sm' : '', disabled.value ? 'du-button__text--disabled' : '', props.textClass])
+const loadingClass = computed(() => 'du-button__loading du-button__loading--' + variant.value + (size.value === 'sm' ? ' du-button__loading--sm' : '') + (disabled.value ? ' du-button__loading--disabled' : ''))
+const emit = defineEmits<{
+  (event: 'click'): void
+  (event: 'press-in'): void
+  (event: 'press-out'): void
+  (event: 'longpress'): void
+  (event: 'focus'): void
+  (event: 'blur'): void
+  (event: 'hover-in'): void
+  (event: 'hover-out'): void
+}>()
+function handleClick() { if (!blocked.value) emit('click') }
+let longpressTimer: ReturnType<typeof setTimeout> | null = null
+function pressIn() {
+  if (blocked.value || pressed.value) return
+  pressed.value = true; emit('press-in')
+  longpressTimer = setTimeout(() => { if (pressed.value && !blocked.value) emit('longpress') }, Math.max(0, props.delayLongPress))
+}
+function pressOut() {
+  if (longpressTimer != null) { clearTimeout(longpressTimer); longpressTimer = null }
+  if (!pressed.value) return
+  pressed.value = false; emit('press-out')
+}
+watch(blocked, value => { if (value) pressOut() })
+onUnmounted(pressOut)
+function focusIn() { focused.value = true; emit('focus') }
+function focusOut() { focused.value = false; pressOut(); emit('blur') }
+function isImage(value: string): boolean { return value.startsWith('/') || value.startsWith('http') || value.startsWith('data:') || value.startsWith('./') }
+// #ifdef WEB
+function keydown(event: KeyboardEvent) { if (blocked.value && (event.key === 'Enter' || event.key === ' ')) event.preventDefault(); if ((event.key === 'Enter' || event.key === ' ') && !event.repeat) pressIn() }
+// #endif
+</script>
+
+<template>
+  <!-- #ifdef WEB -->
+  <component :is="'button'" :class="classes" :style="rootStyle" :type="props.type" :disabled="disabled" :tabindex="blocked ? -1 : 0" :aria-disabled="blocked" :aria-busy="props.loading" :aria-label="props.ariaLabel.length > 0 ? props.ariaLabel : props.label || undefined" :form="props.form" :formaction="props.formAction" :formmethod="props.formMethod" :formenctype="props.formEncType" :formnovalidate="props.formNoValidate" :formtarget="props.formTarget" :name="props.name" :value="props.value" :popovertarget="props.popoverTarget" :popovertargetaction="props.popoverTargetAction"
+    @click="blocked ? $event.preventDefault() : handleClick()" @keydown="keydown" @keyup="pressOut" @pointerdown="pressIn" @pointerup="pressOut" @pointercancel="pressOut" @pointerleave="pressOut" @mouseenter="hovered = true; emit('hover-in')" @mouseleave="hovered = false; emit('hover-out')" @focus="focusIn" @blur="focusOut">
+
+    <view :class="['du-button__content', props.contentClass]" :style="{ gap: (props.gap ?? 8) + 'px', flexDirection: context.dir === 'rtl' ? 'row-reverse' : 'row' }">
+      <slot v-if="props.loading" name="loading" :size="iconSize">
+        <!-- #ifdef WEB -->
+        <view class="du-button__web-spinner" :class="textClasses" :style="textStyle" aria-hidden="true" />
+        <!-- #endif -->
+        <!-- #ifndef WEB -->
+        <button class="du-button__spinner-host" loading :loading-class="loadingClass" hover-class="none" />
+        <!-- #endif -->
+      </slot>
+      <slot v-else name="icon" :size="iconSize">
+        <image v-if="props.icon.length > 0 && isImage(props.icon)" :src="props.icon" :class="['du-button__icon', props.iconClass]" :style="{ width: iconSize + 'px', height: iconSize + 'px' }" mode="aspectFit" />
+        <text v-else-if="props.icon.length > 0" :class="textClasses" :style="{ ...textStyle, fontSize: iconSize + 'px' }">{{ props.icon }}</text>
+      </slot>
+      <slot :size="size" :loading="props.loading" :disabled="disabled">
+        <text v-if="text.length > 0" :class="textClasses" :style="textStyle">{{ text }}</text>
+      </slot>
+      <slot v-if="!props.loading" name="icon-after" :size="iconSize">
+        <image v-if="props.iconAfter.length > 0 && isImage(props.iconAfter)" :src="props.iconAfter" :class="['du-button__icon', props.iconClass]" :style="{ width: iconSize + 'px', height: iconSize + 'px' }" mode="aspectFit" />
+        <text v-else-if="props.iconAfter.length > 0" :class="textClasses" :style="{ ...textStyle, fontSize: iconSize + 'px' }">{{ props.iconAfter }}</text>
+      </slot>
+    </view>
+  </component>
+  <!-- #endif -->
+  <!-- #ifndef WEB -->
+  <button v-if="!rich" :class="classes" :style="rootStyle" :disabled="disabled" :loading="props.loading" :loading-class="'du-button__spinner ' + loadingClass" :loading-text-class="loadingClass" :form-type="blocked || props.type === 'button' ? '' : props.type" :hover-class="blocked || props.chromeless === 'all' ? 'none' : 'du-button--pressed'" @click="handleClick" @touchstart="pressIn" @touchend="pressOut" @touchcancel="pressOut">{{ text }}</button>
+  <view v-else :class="classes" :style="rootStyle" :hover-class="blocked || props.chromeless === 'all' ? 'none' : 'du-button--pressed'">
+
+    <view :class="['du-button__content', props.contentClass]" :style="{ gap: (props.gap ?? 8) + 'px', flexDirection: context.dir === 'rtl' ? 'row-reverse' : 'row' }">
+      <slot v-if="props.loading" name="loading" :size="iconSize">
+        <!-- #ifdef WEB -->
+        <view class="du-button__web-spinner" :class="textClasses" :style="textStyle" aria-hidden="true" />
+        <!-- #endif -->
+        <!-- #ifndef WEB -->
+        <button class="du-button__spinner-host" loading :loading-class="loadingClass" hover-class="none" />
+        <!-- #endif -->
+      </slot>
+      <slot v-else name="icon" :size="iconSize">
+        <image v-if="props.icon.length > 0 && isImage(props.icon)" :src="props.icon" :class="['du-button__icon', props.iconClass]" :style="{ width: iconSize + 'px', height: iconSize + 'px' }" mode="aspectFit" />
+        <text v-else-if="props.icon.length > 0" :class="textClasses" :style="{ ...textStyle, fontSize: iconSize + 'px' }">{{ props.icon }}</text>
+      </slot>
+      <slot :size="size" :loading="props.loading" :disabled="disabled">
+        <text v-if="text.length > 0" :class="textClasses" :style="textStyle">{{ text }}</text>
+      </slot>
+      <slot v-if="!props.loading" name="icon-after" :size="iconSize">
+        <image v-if="props.iconAfter.length > 0 && isImage(props.iconAfter)" :src="props.iconAfter" :class="['du-button__icon', props.iconClass]" :style="{ width: iconSize + 'px', height: iconSize + 'px' }" mode="aspectFit" />
+        <text v-else-if="props.iconAfter.length > 0" :class="textClasses" :style="{ ...textStyle, fontSize: iconSize + 'px' }">{{ props.iconAfter }}</text>
+      </slot>
+    </view>
+    <button class="du-button__native-target" :style="{ backgroundColor: 'transparent', color: 'transparent' }" :disabled="blocked" :form-type="props.type === 'button' ? '' : props.type" hover-class="none" @click="handleClick" @touchstart="pressIn" @touchend="pressOut" @touchcancel="pressOut">{{ props.ariaLabel || props.label }}</button>
+  </view>
+  <!-- #endif -->
+</template>
+
+<style lang="scss">
+@import '../../styles/tokens.scss';
+@import '../../styles/theme.scss';
+.du-button { position: relative; }
+.du-button--styled { height: var(--du-control-md, $du-control-md); min-width: 48px; padding: 0px 20px; border-width: 1px; border-style: solid; border-radius: var(--du-radius, $du-radius); font-size: var(--du-font-body, $du-font-body); font-weight: 600; line-height: var(--du-control-md, $du-control-md); background-color: var(--du-surface, $du-surface); color: var(--du-text, $du-text); border-color: transparent; transition-property: opacity; transition-duration: var(--du-duration-fast, $du-duration-fast); }
+.du-button--primary { background-color: var(--du-primary, $du-primary); border-color: var(--du-primary, $du-primary); color: var(--du-on-primary, $du-on-primary); }
+.du-button--secondary { background-color: var(--du-surface-muted, $du-surface-muted); color: var(--du-text, $du-text); }
+.du-button--outline { background-color: transparent; border-color: var(--du-border, $du-border); color: var(--du-text, $du-text); }
+.du-button--ghost { background-color: transparent; color: var(--du-primary, $du-primary); }
+.du-button--danger { background-color: var(--du-danger, $du-danger); color: var(--du-on-danger, $du-on-danger); }
+.du-button--sm { height: var(--du-control-sm, $du-control-sm); line-height: var(--du-control-sm, $du-control-sm); font-size: var(--du-font-small, $du-font-small); padding: 0px 16px; }
+.du-button--lg { height: var(--du-control-lg, $du-control-lg); line-height: var(--du-control-lg, $du-control-lg); padding: 0px 24px; }
+.du-button--chromeless { background-color: transparent; border-color: transparent; color: var(--du-text, $du-text); }
+.du-button--unstyled { height: auto; min-width: 0px; padding: 0px; border-width: 0px; border-radius: 0px; background-color: transparent; color: var(--du-text, $du-text); }
+.du-button--disabled { background-color: var(--du-disabled-surface, $du-disabled-surface); border-color: transparent; color: var(--du-disabled-text, $du-disabled-text); }
+.du-button--pressed { opacity: 0.82; }
+.du-button__content { flex-direction: row; align-items: center; justify-content: center; height: 100%; }
+.du-button__text { font-size: var(--du-font-body, $du-font-body); font-weight: 600; color: var(--du-text, $du-text); }
+.du-button__text--primary { color: var(--du-on-primary, $du-on-primary); }
+.du-button__text--danger { color: var(--du-on-danger, $du-on-danger); }
+.du-button__text--ghost { color: var(--du-primary, $du-primary); }
+.du-button__text--sm { font-size: var(--du-font-small, $du-font-small); }
+.du-button__text--disabled { color: var(--du-disabled-text, $du-disabled-text); }
+.du-button__spinner { width: 16px; height: 16px; }
+.du-button__loading { border-color: var(--du-text, $du-text); font-size: var(--du-font-body, $du-font-body); font-weight: 600; color: var(--du-text, $du-text); }
+.du-button__loading--primary { border-color: var(--du-on-primary, $du-on-primary); color: var(--du-on-primary, $du-on-primary); }
+.du-button__loading--danger { border-color: var(--du-on-danger, $du-on-danger); color: var(--du-on-danger, $du-on-danger); }
+.du-button__loading--ghost { border-color: var(--du-primary, $du-primary); color: var(--du-primary, $du-primary); }
+.du-button__loading--sm { font-size: var(--du-font-small, $du-font-small); }
+.du-button__loading--disabled { border-color: var(--du-disabled-text, $du-disabled-text); color: var(--du-disabled-text, $du-disabled-text); }
+.du-button__spinner-host { width: 24px; height: 24px; padding: 0px; margin: 0px; border-width: 0px; background-color: transparent; }
+.du-button__native-target { position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; margin: 0px; padding: 0px; border-width: 0px; border-radius: 0px; background-color: transparent; color: transparent; }
+/* #ifdef WEB */
+.du-button { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; cursor: pointer; font-family: inherit; }
+.du-button:disabled { cursor: default; }
+.du-button__content { display: flex; }
+.du-button__web-spinner { width: 16px; height: 16px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; box-sizing: border-box; animation: du-button-spin 0.8s linear infinite; }
+@keyframes du-button-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .du-button__web-spinner { animation: none; } }
+.du-button:focus-visible { outline: 2px solid var(--du-focus, $du-focus); outline-offset: 3px; }
+/* #endif */
+</style>

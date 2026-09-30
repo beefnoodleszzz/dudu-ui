@@ -1,0 +1,9 @@
+{
+  "name": "du-button",
+  "title": "按钮",
+  "category": "基础",
+  "summary": "图标与插槽组合、尺寸联动、交互状态和表单语义",
+  "status": "experimental",
+  "since": "0.1.0",
+  "example": "pages/examples/button/index"
+}

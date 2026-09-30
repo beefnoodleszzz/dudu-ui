@@ -1,0 +1,8 @@
+<script setup lang="uts">
+// 示例应用入口。
+onLaunch(() => {})
+</script>
+
+<style>
+/* 组件默认隔离；主题在使用处通过 CSS 变量传入。 */
+</style>

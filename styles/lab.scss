@@ -1,0 +1,27 @@
+@import '../uni_modules/dudu-ui/styles/tokens.scss';
+.lab-scroll { flex: 1; }
+.lab-page { background-color: var(--du-background, $du-background); padding-bottom: 32px; }
+.lab { width: 100%; max-width: 960px; align-self: center; padding: 28px 24px; }
+.lab-eyebrow { font-size: 12px; font-weight: 600; color: var(--du-primary, $du-primary); margin-bottom: 16px; }
+.lab-title { font-size: 36px; font-weight: 700; line-height: 46px; color: var(--du-text, $du-text); margin-bottom: 12px; }
+.lab-description { font-size: 16px; line-height: 26px; color: var(--du-text-muted, $du-text-muted); margin-bottom: 28px; }
+.lab-section { padding: 24px; background-color: var(--du-surface, $du-surface); border-width: 1px; border-style: solid; border-color: var(--du-divider, $du-divider); border-radius: var(--du-radius-lg, $du-radius-lg); margin-bottom: 20px; }
+.lab-heading { font-size: 20px; font-weight: 600; line-height: 28px; color: var(--du-text, $du-text); margin-bottom: 8px; }
+.lab-subheading { font-size: 14px; line-height: 22px; color: var(--du-text-muted, $du-text-muted); margin-bottom: 20px; }
+.lab-button { margin-bottom: 12px; }
+.lab-row { flex-direction: row; flex-wrap: wrap; margin-bottom: 12px; }
+.lab-action { margin-right: 12px; margin-bottom: 12px; }
+.lab-result { font-size: 14px; line-height: 24px; color: var(--du-text, $du-text); margin-top: 8px; }
+.lab-note { font-size: 14px; line-height: 24px; color: var(--du-text-muted, $du-text-muted); }
+.lab-field { margin-bottom: 24px; }
+.lab-divider { height: 1px; background-color: var(--du-divider, $du-divider); margin: 20px 0px; }
+.lab-chip { font-size: 12px; color: var(--du-primary, $du-primary); margin-bottom: 12px; }
+.lab-preview { padding: 20px; background-color: var(--du-background, $du-background); border-radius: var(--du-radius, $du-radius); margin-bottom: 12px; }
+/* #ifdef WEB */
+.lab-page { min-height: 100vh; }
+@media (max-width: 480px) {
+  .lab { padding: 24px 16px; }
+  .lab-title { font-size: 30px; line-height: 40px; }
+  .lab-section { padding: 20px 16px; }
+}
+/* #endif */

@@ -1,0 +1,41 @@
+<script setup lang="uts">
+import { shallowRef } from 'vue'
+const name = shallowRef('')
+const error = shallowRef('')
+function validate() { error.value = name.value.trim().length === 0 ? '请输入你的称呼' : '' }
+function reset() { name.value = ''; error.value = '' }
+</script>
+
+<template>
+  <scroll-view class="lab-scroll" direction="vertical">
+    <du-config-provider class="lab-page">
+      <view class="lab">
+        <text class="lab-eyebrow">COMPONENT / INPUT</text>
+        <text class="lab-title">输入更从容。</text>
+        <text class="lab-description">标签始终可见，帮助和错误反馈就近呈现。校验规则由你的业务决定。</text>
+        <view class="lab-section">
+          <du-input id="demo-input" class="lab-field" v-model="name" label="你的称呼" placeholder="例如：张龙" help="最多 20 个字符" :maxlength="20" :error="error" input-class="example-input" @blur="validate" />
+          <text id="input-value" class="lab-result">当前输入：{{ name }}</text>
+          <view class="lab-row">
+            <du-button id="validate-input" class="lab-action" label="验证" @click="validate" />
+            <du-button id="reset-input" class="lab-action" label="重置" variant="outline" @click="reset" />
+          </view>
+          <view class="lab-divider" />
+          <du-input id="uncontrolled-input" class="lab-field" default-value="初始值" label="非受控输入" />
+          <du-input id="readonly-input" class="lab-field" default-value="可读内容" label="只读输入" read-only />
+          <du-input id="email-input" class="lab-field" label="邮箱" type="email" required name="email" auto-complete="email" enter-key-hint="next" placeholder="name@example.com" :min-length="3" pattern=".+@.+" :size="56" placeholder-text-color="#526071" selection-color="#2455d6" />
+          <du-input id="selection-input" class="lab-field" label="选区控制" default-value="abcdef" :selection-start="2" :selection-end="4" />
+          <du-input id="compact-input" class="lab-field" label="小尺寸" size="sm" />
+          <du-input id="unstyled-input" class="lab-field" label="无样式输入" unstyled />
+          <du-input id="disabled-input" class="lab-field" model-value="不可修改的内容" label="禁用输入框" disabled />
+          <du-input model-value="" label="密码" placeholder="输入密码" password help="输入内容会隐藏" />
+        </view>
+      </view>
+    </du-config-provider>
+  </scroll-view>
+</template>
+
+<style lang="scss">
+@import '../../../styles/lab.scss';
+.example-input { border-radius: 8px; }
+</style>

@@ -1,0 +1,79 @@
+import { computed, inject } from 'vue'
+import type { ComputedRef } from 'vue'
+import { duLightColors, duDarkColors, duSharedTokens } from '../styles/tokens.uts'
+
+export type DuSize = string | number
+export type DuStyle = Record<string, string | number>
+export type DuResponsiveSize = { sm?: DuSize; md?: DuSize; lg?: DuSize }
+export type DuBreakpoints = { md: number; lg: number }
+export type DuConfig = {
+  tokens?: Record<string, string>
+  themes?: Record<string, Record<string, string>>
+  defaultTheme?: string
+  size?: DuSize
+  buttonVariant?: string
+  breakpoints?: DuBreakpoints
+}
+export type DuContext = {
+  config: DuConfig
+  theme: string
+  scheme: string
+  size: DuSize
+  buttonVariant: string
+  disabled: boolean
+  unstyled: boolean
+  reducedMotion: boolean
+  dir: string
+  locale: string
+  width: number
+}
+export const duConfigKey = Symbol('dudu-ui.config')
+export const defaultContext = computed<DuContext>(() => ({ config: {}, theme: 'auto', scheme: 'light', size: 'md', buttonVariant: 'primary', disabled: false, unstyled: false, reducedMotion: false, dir: 'ltr', locale: 'zh-CN', width: 0 }))
+export function useDuConfig(): ComputedRef<DuContext> { return inject<ComputedRef<DuContext>>(duConfigKey, defaultContext) }
+export function controlSize(size: DuSize, config: DuConfig = {}): number {
+  if (typeof size === 'number') return Number.isFinite(size) ? Math.max(44, size) : parseFloat(duSharedTokens['control-md'])
+  const token = config.tokens?.['size-' + size.replace('$', '')] ?? config.tokens?.['control-' + size] ?? duSharedTokens['control-' + size]
+  return token != null && Number.isFinite(parseFloat(token)) ? Math.max(44, parseFloat(token)) : parseFloat(duSharedTokens['control-md'])
+}
+export function responsiveSize(size: DuSize, responsive: DuResponsiveSize | undefined, context: DuContext): DuSize {
+  if (responsive == null) return size
+  const points = context.config.breakpoints ?? { md: 768, lg: 1024 }
+  const value = context.width >= points.lg ? responsive.lg : context.width >= points.md ? responsive.md : responsive.sm
+  return value ?? size
+}
+export function themeClass(theme: string): string {
+  // #ifdef WEB
+  return 'du-theme--' + (theme.startsWith('dark') ? 'dark' : theme === 'auto' ? 'auto' : 'light')
+  // #endif
+  // #ifndef WEB
+  return ''
+  // #endif
+}
+export function themeVariables(theme: string, config: DuConfig, scheme: string = 'light', resetBase: boolean = true): Record<string, string> {
+  const values: Record<string, string> = {}
+  // Native theme classes overwrite same-node inline custom properties; write the resolved palette once.
+  // #ifndef WEB
+  if (resetBase) {
+    const base = theme.startsWith('dark') || theme === 'auto' && scheme === 'dark' ? duDarkColors : duLightColors
+    for (const key of Object.keys(base)) values['--du-' + key] = base[key]
+  }
+  // #endif
+  if (config.tokens != null) for (const key of Object.keys(config.tokens)) values['--du-' + key] = config.tokens[key]
+  const custom = config.themes?.[theme]
+  if (custom != null) for (const key of Object.keys(custom)) values['--du-' + key] = custom[key]
+  return values
+}
+export function resolveTheme(name: string, parent: string, config: DuConfig, scheme: string): string {
+  if (['auto', 'light', 'dark'].includes(name) || config.themes?.[name] != null) return name
+  const mode = parent.startsWith('dark') ? 'dark' : parent === 'auto' ? scheme : 'light'
+  const scoped = mode + '_' + name
+  return config.themes?.[scoped] != null ? scoped : parent
+}
+export function colorValue(value: string, theme: string, config: DuConfig, scheme: string = 'light'): string {
+  if (!value.startsWith('$')) return value
+  const key = value.slice(1)
+  const custom = config.themes?.[theme]?.[key]
+  if (custom != null) return custom
+  const mode = theme.startsWith('dark') || theme === 'auto' && scheme === 'dark' ? 'dark' : 'light'
+  return (mode === 'dark' ? duDarkColors : duLightColors)[key] ?? value
+}

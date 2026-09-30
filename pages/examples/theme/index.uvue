@@ -1,0 +1,73 @@
+<script setup lang="uts">
+import { shallowRef } from 'vue'
+import type { DuConfig } from '../../../uni_modules/dudu-ui/shared/config.uts'
+const value = shallowRef('')
+const width = shallowRef(uni.getWindowInfo().windowWidth)
+onResize(event => { width.value = event.size.windowWidth })
+const config: DuConfig = {
+  defaultTheme: 'light_brand', size: 'sm', buttonVariant: 'outline',
+  tokens: { 'size-tall': '72px' },
+  themes: { light_brand: { primary: '#136d52', 'on-primary': '#ffffff' } },
+  breakpoints: { md: 768, lg: 1024 },
+}
+</script>
+
+<template>
+  <scroll-view class="lab-scroll" direction="vertical">
+    <du-config-provider class="lab-page" :window-width="width">
+      <view class="lab">
+        <text class="lab-eyebrow">COMPONENT / THEME</text>
+        <text class="lab-title">同一个组件，不同的气质。</text>
+        <text class="lab-description">主题、尺寸和状态在局部继承，让品牌与系统偏好自然共存。</text>
+        <du-config-provider :config="config" class="lab-section">
+          <text class="lab-heading">配置与继承</text>
+          <du-button id="configured-button" class="lab-button" label="默认尺寸与描边" />
+          <du-button id="named-subtheme-button" class="lab-button" theme="brand" variant="primary" label="命名子主题" />
+          <du-button id="token-button" class="lab-button" size="$tall" label="自定义尺寸 72px" />
+          <du-button id="responsive-button" class="lab-button" :responsive-size="{ sm: 'sm', md: 'md', lg: 'lg' }" label="响应式尺寸" />
+          <du-config-provider inherit>
+            <du-button id="inherited-button" class="lab-button" variant="primary" label="继承品牌主题" />
+          </du-config-provider>
+          <du-config-provider inherit theme-inverse>
+            <du-button id="inverse-button" class="lab-button" variant="primary" label="反转主题" />
+            <du-config-provider theme-reset>
+              <du-button id="reset-theme-button" class="lab-button" variant="primary" label="恢复品牌主题" />
+            </du-config-provider>
+          </du-config-provider>
+          <du-config-provider inherit disabled>
+            <du-button id="provider-disabled-button" class="lab-button" label="继承禁用状态" />
+            <du-input id="provider-disabled-input" class="lab-field" label="继承禁用输入" default-value="不可编辑" />
+          </du-config-provider>
+          <du-config-provider inherit dir="rtl">
+            <du-button id="rtl-button" class="lab-button" label="RTL 排列" icon="＋" icon-after="→" />
+          </du-config-provider>
+        </du-config-provider>
+        <du-config-provider theme="light" class="lab-section">
+          <text class="lab-heading">明亮</text>
+          <du-button id="light-button" class="lab-button" label="主要操作" />
+          <du-input class="lab-field" v-model="value" label="同步输入" placeholder="尝试输入" />
+        </du-config-provider>
+        <du-config-provider theme="dark" class="lab-section">
+          <text class="lab-heading">深色</text>
+          <du-button id="dark-button" class="lab-button" label="主要操作" />
+          <du-input class="lab-field" v-model="value" label="同步输入" placeholder="尝试输入" />
+        </du-config-provider>
+        <du-config-provider theme="auto" class="lab-section">
+          <text class="lab-heading">跟随系统</text>
+          <du-button id="auto-button" class="lab-button" label="系统主题" />
+          <du-config-provider inherit theme-inverse>
+            <du-button id="auto-inverse-button" class="lab-button" label="反转系统主题" />
+          </du-config-provider>
+        </du-config-provider>
+        <du-config-provider theme="light" class="lab-section" style="--du-primary: #136d52; --du-on-primary: #ffffff;">
+          <text class="lab-heading">品牌色</text>
+          <du-button id="brand-button" class="lab-button" label="品牌操作" />
+        </du-config-provider>
+      </view>
+    </du-config-provider>
+  </scroll-view>
+</template>
+
+<style lang="scss">
+@import '../../../styles/lab.scss';
+</style>

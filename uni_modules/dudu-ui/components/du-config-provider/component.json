@@ -1,0 +1,9 @@
+{
+  "name": "du-config-provider",
+  "title": "主题容器",
+  "category": "基础",
+  "summary": "局部配置、命名主题、默认值和响应式上下文",
+  "status": "experimental",
+  "since": "0.1.0",
+  "example": "pages/examples/theme/index"
+}

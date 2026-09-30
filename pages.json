@@ -1,0 +1,36 @@
+{
+  "easycom": {
+    "autoscan": true
+  },
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "Dudu UI"
+      }
+    },
+    {
+      "path": "pages/examples/button/index",
+      "style": {
+        "navigationBarTitleText": "Button"
+      }
+    },
+    {
+      "path": "pages/examples/input/index",
+      "style": {
+        "navigationBarTitleText": "Input"
+      }
+    },
+    {
+      "path": "pages/examples/theme/index",
+      "style": {
+        "navigationBarTitleText": "Theme"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "@navText",
+    "navigationBarBackgroundColor": "@surface",
+    "backgroundColor": "@background"
+  }
+}

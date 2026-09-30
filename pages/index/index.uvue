@@ -1,0 +1,27 @@
+<script setup lang="uts">
+import { componentCatalog } from '../catalog.generated.uts'
+function openExample(path: string) { uni.navigateTo({ url: '/' + path }) }
+</script>
+
+<template>
+  <scroll-view class="lab-scroll" direction="vertical">
+    <du-config-provider class="lab-page">
+      <view class="lab">
+        <text class="lab-eyebrow">DUDU UI / 0.1.0</text>
+        <text class="lab-title">小细节，成就好体验。</text>
+        <text class="lab-description">为 uni-app X 设计的组件工作台。探索主题、交互与表单，让每个组件都拥有一致的体验。</text>
+        <view v-for="component in componentCatalog" :key="component.name" class="lab-section">
+          <text class="lab-chip">{{ component.name }}</text>
+          <text class="lab-heading">{{ component.title }}</text>
+          <text class="lab-subheading">{{ component.summary }}</text>
+          <du-button :label="'探索' + component.title" variant="outline" @click="openExample(component.path)" />
+        </view>
+        <text class="lab-note">开发预览 · API 尚未冻结。请查看文档中的平台验证记录。</text>
+      </view>
+    </du-config-provider>
+  </scroll-view>
+</template>
+
+<style lang="scss">
+@import '../../styles/lab.scss';
+</style>

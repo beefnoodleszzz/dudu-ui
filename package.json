@@ -1,0 +1,19 @@
+{
+  "name": "dudu-ui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dudu UI component library for uni-app X Vapor",
+  "scripts": {
+    "check": "node scripts/check.mjs",
+    "build:web": "node scripts/hbuilderx.mjs build:web",
+    "open": "node scripts/hbuilderx.mjs open",
+    "generate": "node scripts/generate.mjs",
+    "component:new": "node scripts/new-component.mjs",
+    "test": "node --test tests/tooling.test.mjs",
+    "pack": "node scripts/pack.mjs",
+    "release:check": "node scripts/release-check.mjs",
+    "verify:consumer": "node scripts/verify-consumer.mjs",
+    "test:web": "node scripts/test-web.mjs",
+    "beads:export": "node scripts/beads-export.mjs"
+  }
+}

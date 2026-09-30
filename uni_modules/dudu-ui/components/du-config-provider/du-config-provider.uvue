@@ -1,0 +1,104 @@
+<script setup lang="uts">
+import { computed, provide, shallowRef, onMounted, onUnmounted, watch } from 'vue'
+import { duConfigKey, defaultContext, useDuConfig, themeVariables, themeClass, resolveTheme } from '../../shared/config.uts'
+import type { DuConfig, DuContext, DuSize } from '../../shared/config.uts'
+const props = withDefaults(defineProps<{
+  config?: DuConfig
+  theme?: string
+  inherit?: boolean
+  themeInverse?: boolean
+  themeReset?: boolean
+  size?: DuSize
+  buttonVariant?: string
+  disabled?: boolean
+  unstyled?: boolean
+  reducedMotion?: boolean
+  dir?: 'ltr' | 'rtl'
+  locale?: string
+  windowWidth?: number
+}>(), { disabled: undefined, unstyled: undefined, reducedMotion: undefined, inherit: false, themeInverse: false, themeReset: false })
+const parent = useDuConfig()
+const width = shallowRef(0)
+const rootScope = parent === defaultContext
+const systemTheme = shallowRef('light')
+const scheme = computed(() => rootScope ? systemTheme.value : parent.value.scheme)
+// #ifdef WEB
+let media: MediaQueryList | null = null
+function systemChange(event: MediaQueryListEvent) { systemTheme.value = event.matches ? 'dark' : 'light' }
+// #endif
+// #ifdef APP
+let themeListener: number | null = null
+// #endif
+const resolvedConfig = computed(() => props.config ?? parent.value.config)
+const theme = computed(() => {
+  let name = props.theme ?? (props.inherit ? parent.value.theme : resolvedConfig.value.defaultTheme ?? 'auto')
+  if (props.themeReset) name = resolvedConfig.value.defaultTheme ?? 'auto'
+  name = resolveTheme(name, parent.value.theme, resolvedConfig.value, scheme.value)
+  if (props.themeInverse) {
+    const dark = name.startsWith('dark') || name === 'auto' && scheme.value === 'dark'
+    const mode = dark ? 'light' : 'dark'
+    const opposite = name.replace(/^(light|dark)/, mode)
+    name = opposite !== name && resolvedConfig.value.themes?.[opposite] != null ? opposite : mode
+  }
+  return name
+})
+const context = computed<DuContext>(() => ({
+  config: resolvedConfig.value, theme: theme.value, scheme: scheme.value,
+  size: props.size ?? resolvedConfig.value.size ?? parent.value.size,
+  buttonVariant: props.buttonVariant ?? resolvedConfig.value.buttonVariant ?? parent.value.buttonVariant,
+  disabled: props.disabled ?? parent.value.disabled, unstyled: props.unstyled ?? parent.value.unstyled,
+  reducedMotion: props.reducedMotion ?? parent.value.reducedMotion,
+  dir: props.dir ?? parent.value.dir, locale: props.locale ?? parent.value.locale,
+  width: props.windowWidth ?? (rootScope ? width.value : parent.value.width),
+}))
+provide(duConfigKey, context)
+const inheritsTheme = computed(() => props.inherit && props.theme == null && !props.themeReset && !props.themeInverse)
+const variables = computed(() => {
+  const values = themeVariables(theme.value, resolvedConfig.value, scheme.value, !inheritsTheme.value)
+  if (context.value.reducedMotion) { values['--du-duration-fast'] = '0ms'; values['--du-duration-normal'] = '0ms' }
+  return values
+})
+function resize() { width.value = props.windowWidth ?? uni.getWindowInfo().windowWidth }
+onMounted(() => {
+  resize()
+  if (!rootScope) return
+  // #ifdef APP
+  systemTheme.value = uni.getDeviceInfo().osTheme ?? 'light'
+  themeListener = uni.onOsThemeChange(event => { systemTheme.value = event.osTheme })
+  // #endif
+  // #ifdef WEB
+  const query = window.matchMedia('(prefers-color-scheme: dark)')
+  media = query
+  systemTheme.value = query.matches ? 'dark' : 'light'
+  query.addEventListener('change', systemChange)
+  window.addEventListener('resize', resize)
+  // #endif
+})
+watch(() => props.windowWidth, resize)
+onUnmounted(() => {
+  // #ifdef WEB
+  window.removeEventListener('resize', resize)
+  media?.removeEventListener('change', systemChange)
+  // #endif
+  // #ifdef APP
+  if (themeListener != null) uni.offOsThemeChange(themeListener)
+  // #endif
+})
+// #ifdef WEB
+const platformAttrs = computed(() => ({ dir: context.value.dir, lang: context.value.locale }))
+// #endif
+// #ifndef WEB
+const platformAttrs = {}
+// #endif
+</script>
+
+<template>
+  <view :class="['du-config-provider', inheritsTheme ? '' : themeClass(theme), context.reducedMotion ? 'du-motion--reduced' : '']" :style="variables" v-bind="platformAttrs">
+    <slot :theme="theme" :size="context.size" :width="context.width" :dir="context.dir" />
+  </view>
+</template>
+
+<style lang="scss">
+@import '../../styles/theme.scss';
+.du-config-provider { flex-direction: column; }
+</style>

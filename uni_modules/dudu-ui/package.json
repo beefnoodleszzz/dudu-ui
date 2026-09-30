@@ -1,0 +1,64 @@
+{
+  "id": "dudu-ui",
+  "displayName": "Dudu UI",
+  "version": "0.1.0",
+  "description": "面向 uni-app X 蒸汽模式的组件库",
+  "keywords": [
+    "uni-app-x",
+    "vapor",
+    "components"
+  ],
+  "engines": {
+    "HBuilderX": "^5.26.0"
+  },
+  "dcloudext": {
+    "type": "component-vue",
+    "contact": {},
+    "declaration": {
+      "ads": "无广告",
+      "data": "不采集或上传终端用户数据",
+      "permissions": "不申请额外权限"
+    },
+    "darkmode": "-",
+    "i18n": "-",
+    "widescreen": "-"
+  },
+  "uni_modules": {
+    "dependencies": [],
+    "encrypt": [],
+    "platforms": {
+      "client": {
+        "uni-app-x": {
+          "web": {
+            "chrome": "-",
+            "safari": "-"
+          },
+          "app": {
+            "android": "-",
+            "ios": "-",
+            "harmony": "-"
+          },
+          "mp": {
+            "weixin": "-"
+          }
+        }
+      }
+    }
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "files": [
+    "shared",
+    "components",
+    "styles",
+    "readme.md",
+    "catalog.md",
+    "docs",
+    "changelog.md",
+    "license.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/beefnoodleszzz/dudu-ui.git"
+  }
+}

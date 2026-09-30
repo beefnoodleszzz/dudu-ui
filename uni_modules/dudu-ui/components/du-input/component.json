@@ -1,0 +1,9 @@
+{
+  "name": "du-input",
+  "title": "输入框",
+  "category": "表单",
+  "summary": "受控及非受控输入、类型与表单属性、键盘和样式定制",
+  "status": "experimental",
+  "since": "0.1.0",
+  "example": "pages/examples/input/index"
+}
