@@ -1,0 +1,13 @@
+.DS_Store
+node_modules/
+unpackage/
+.hbuilderx/
+*.log
+dist/
+reports/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
